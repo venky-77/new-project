@@ -12,4 +12,4 @@ phases:
       - echo "Deploying CloudFormation stack..."
       - ls -l
       - cat template.yml
-      - aws cloudformation deploy --template-file template.yaml --stack-name MyLambdaStack --capabilities CAPABILITY_NAMED_IAM
+      - aws cloudformation deploy --template-file template.yml --stack-name MyLambdaStack --capabilities CAPABILITY_NAMED_IAM
