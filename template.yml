@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy Lambda, Scheduler Group, and Schedule using existing IAM roles
+
+Parameters:
+  ExistingLambdaExecutionRoleArn:
+    Type: String
+    Default: arn:aws:iam::794038240530:role/lambda-role
+    Description: ARN of the existing Lambda execution role
+
+  ExistingSchedulerExecutionRoleArn:
+    Type: String
+    Default: arn:aws:iam::794038240530:role/service-role/Amazon_EventBridge_Scheduler_LAMBDA_7370da942a
+    Description: ARN of the existing EventBridge Scheduler execution role
+
+Resources:
+
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: MyScheduledLambda
+      Handler: index.handler
+      Role: !Ref ExistingLambdaExecutionRoleArn
+      Runtime: python3.9
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              print("Lambda triggered by EventBridge Scheduler Group")
+              return
+
+  # MySchedulerGroup:
+  #   Type: AWS::Scheduler::ScheduleGroup
+  #   Properties:
+  #     Name: MySchedulerGroup
+  #     Tags:
+  #       - Key: Project
+  #         Value: EventAutomation
+  #       - Key: Owner
+  #         Value: CloudTeam
+  #       - Key: Environment
+  #         Value: Production
+
+  EventBridgeSchedulerRule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: MyFiveMinuteScheduler
+      ScheduleExpression: rate(5 minutes)
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      State: ENABLED  
+      GroupName: default
+      Target:
+        Arn: !GetAtt MyLambdaFunction.Arn
+        RoleArn: !Ref ExistingSchedulerExecutionRoleArn
+        Input: '{}'
+
+Outputs:
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref MyLambdaFunction
+
+  # SchedulerGroupName:
+  #   Description: Name of the EventBridge Scheduler group
+  #   Value: !Ref MySchedulerGroup
+
+  SchedulerRuleName:
+    Description: Name of the EventBridge Scheduler rule
+    Value: !Ref EventBridgeSchedulerRule
+
+  LambdaExecutionRoleArn:
+    Description: Passed-in ARN of the Lambda execution role
+    Value: !Ref ExistingLambdaExecutionRoleArn
+
+  SchedulerExecutionRoleArn:
+    Description: Passed-in ARN of the Scheduler execution role
+    Value: !Ref ExistingSchedulerExecutionRoleArn
