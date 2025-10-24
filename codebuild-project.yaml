@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template to create AWS CodeBuild project for Lambda CF automation"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: UnloadJobBuild1
+  GitHubRepo:
+    Type: String
+    Default: https://github.com/venky-77/new-project
+  ServiceRoleArn:
+    Type: String
+    Default: arn:aws:iam::794038240530:role/codebulider-role
+  ConnectionArn:
+    Type: String
+    Description: ARN of CodeStar Connection to GitHub
+    Default: arn:aws:codestar-connections:us-east-1:794038240530:connection/dec72e48-ac24-4b53-ab28-45e80d08e3c6
+
+Resources:
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ProjectName
+      ServiceRole: !Ref ServiceRoleArn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+      Source:
+        Type: GITHUB
+        Location: !Ref GitHubRepo
+        BuildSpec: buildspec.yml
+        Auth:
+          Type: OAUTH
+          Resource: !Ref ConnectionArn
+      Triggers:
+        Webhook: true
+      Description: "CodeBuild project that deploys CloudFormation stack automatically on GitHub commits"
+
+Outputs:
+  CodeBuildProjectName:
+    Description: "Name of the CodeBuild project"
+    Value: !Ref ProjectName
